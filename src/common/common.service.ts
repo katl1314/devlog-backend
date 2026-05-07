@@ -60,14 +60,14 @@ export class CommonService {
     const hasNext = posts.length > dto.take; // 다음 아이템 여부
     const data = posts.slice(0, dto.take);
 
-    // 마지막 아이템의 ID를 다음 커서로 지정
+    // 마지막 아이템의 ID를 다음 커서로 지정 (hasNext가 true일 때만)
     const lastItem = data.length > 0 ? data[data.length - 1] : null;
 
     return {
       data,
       hasNext,
       cursor: {
-        after: lastItem?.id ?? null,
+        after: hasNext ? lastItem?.id : null,
       },
       count: data.length,
     };

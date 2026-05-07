@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -23,12 +24,14 @@ import {
   RefreshTokenGuard,
   TokenPayload,
 } from './guard/bearer-token.guard';
+import { ProviderEnum } from './entity/user.entity';
 
 interface User {
   id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  provider?: string;
 }
 
 /**
@@ -71,15 +74,21 @@ export class AuthController {
    */
   @Post('signIn')
   async signIn(@Body() payload: User) {
-    const { user_id } = await this.authService.getUserByEmail(payload.email!);
+    const user = await this.authService.getUserByEmail(payload.email!);
+    if (payload.provider) {
+      const incoming = payload.provider.toUpperCase() as ProviderEnum;
+      if (incoming !== user.provider) {
+        throw new ConflictException(`PROVIDER_MISMATCH:${user.provider}`);
+      }
+    }
     const { accessToken, refreshToken } = await this.authService.signIn({
       ...payload,
-      userId: user_id,
+      userId: user.user_id,
     });
     return {
       accessToken,
       refreshToken,
-      userId: user_id,
+      userId: user.user_id,
     };
   }
 
