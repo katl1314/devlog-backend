@@ -3,10 +3,13 @@ services:
     image: postgres:15
     restart: always
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data # named volume
     ports:
       - '5432:5432'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: devlog
+
+volumes:
+  postgres-data:

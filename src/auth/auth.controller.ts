@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -23,12 +24,14 @@ import {
   RefreshTokenGuard,
   TokenPayload,
 } from './guard/bearer-token.guard';
+import { ProviderEnum } from './entity/user.entity';
 
 interface User {
   id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  provider?: string;
 }
 
 /**
@@ -71,15 +74,21 @@ export class AuthController {
    */
   @Post('signIn')
   async signIn(@Body() payload: User) {
-    const { user_id } = await this.authService.getUserByEmail(payload.email!);
+    const user = await this.authService.getUserByEmail(payload.email!);
+    if (payload.provider) {
+      const incoming = payload.provider.toUpperCase() as ProviderEnum;
+      if (incoming !== user.provider) {
+        throw new ConflictException(`PROVIDER_MISMATCH:${user.provider}`);
+      }
+    }
     const { accessToken, refreshToken } = await this.authService.signIn({
       ...payload,
-      userId: user_id,
+      userId: user.user_id,
     });
     return {
       accessToken,
       refreshToken,
-      userId: user_id,
+      userId: user.user_id,
     };
   }
 
@@ -227,6 +236,65 @@ export class AuthController {
   @UseGuards(AccessTokenGuard)
   withdrawUser(@Param('userId') userId: string) {
     return this.authService.withdrawUser(userId);
+  }
+
+  /**
+   * 특정 사용자를 팔로우한다.
+   *
+   * @param userId   - 팔로우할 대상 user_id
+   * @param req      - tokenInfo가 주입된 요청 객체 (팔로워 정보 포함)
+   * @returns `{ following: true }`
+   */
+  @Post('users/:userId/follow')
+  @UseGuards(AccessTokenGuard)
+  followUser(
+    @Param('userId') userId: string,
+    @Req() req: Request & { tokenInfo: TokenPayload },
+  ) {
+    return this.authService.followUser(req.tokenInfo.userId, userId);
+  }
+
+  /**
+   * 특정 사용자를 언팔로우한다.
+   *
+   * @param userId   - 언팔로우할 대상 user_id
+   * @param req      - tokenInfo가 주입된 요청 객체 (팔로워 정보 포함)
+   * @returns `{ following: false }`
+   */
+  @Delete('users/:userId/follow')
+  @UseGuards(AccessTokenGuard)
+  unfollowUser(
+    @Param('userId') userId: string,
+    @Req() req: Request & { tokenInfo: TokenPayload },
+  ) {
+    return this.authService.unfollowUser(req.tokenInfo.userId, userId);
+  }
+
+  /**
+   * 현재 로그인 유저가 대상 유저를 팔로우하고 있는지 확인한다.
+   *
+   * @param userId   - 확인할 대상 user_id
+   * @param req      - tokenInfo가 주입된 요청 객체
+   * @returns `{ following: boolean }`
+   */
+  @Get('users/:userId/follow/status')
+  @UseGuards(AccessTokenGuard)
+  getFollowStatus(
+    @Param('userId') userId: string,
+    @Req() req: Request & { tokenInfo: TokenPayload },
+  ) {
+    return this.authService.getFollowStatus(req.tokenInfo.userId, userId);
+  }
+
+  /**
+   * 특정 유저의 팔로워/팔로잉 수를 반환한다.
+   *
+   * @param userId   - 조회할 user_id
+   * @returns `{ followerCount: number, followingCount: number }`
+   */
+  @Get('users/:userId/follow/counts')
+  getFollowCounts(@Param('userId') userId: string) {
+    return this.authService.getFollowCounts(userId);
   }
 
   /**

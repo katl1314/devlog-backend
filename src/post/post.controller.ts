@@ -130,6 +130,22 @@ export class PostController {
   }
 
   /**
+   * 팔로우한 사용자의 포스트를 최신순으로 조회한다.
+   *
+   * @param cursor - 마지막으로 조회한 포스트 ID (0이면 처음부터)
+   * @param req    - 인증된 사용자 정보
+   * @returns 커서 페이지네이션 결과
+   */
+  @Get('following')
+  @UseGuards(AccessTokenGuard)
+  getFollowingFeed(
+    @Query('cursor', ParseIntPipe) cursor: number,
+    @Req() req: IRequest,
+  ) {
+    return this.postService.getFollowingFeed({ cursor, take: 10 }, req.user.id);
+  }
+
+  /**
    * 포스트 목록을 커서 페이지네이션으로 조회한다.
    *
    * @remarks

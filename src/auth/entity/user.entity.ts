@@ -12,6 +12,7 @@ import { PostLikeModel } from '../../post/entity/post_like.entity';
 import { CommentModel } from '../../comment/entity/comment.entity';
 import { BlogModel } from '../../blog/entity/blog.entity';
 import { PostModel } from '../../post/entity/post.entity';
+import { UserFollowModel } from './user_follow.entity';
 
 export enum ProviderEnum {
   email = 'EMAIL', // 이메일
@@ -84,6 +85,12 @@ export class UserModel {
 
   @OneToMany(() => CommentModel, (comment) => comment.user)
   comments: CommentModel[];
+
+  @OneToMany(() => UserFollowModel, (follow) => follow.follower)
+  following: UserFollowModel[];
+
+  @OneToMany(() => UserFollowModel, (follow) => follow.following)
+  followers: UserFollowModel[];
 
   @CreateDateColumn()
   created_at: Date;

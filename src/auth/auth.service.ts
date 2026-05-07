@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -10,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryRunner, Repository } from 'typeorm';
 import { ProviderEnum, StatusEnum, UserModel } from './entity/user.entity';
 import { UserSettingsModel } from './entity/user_settings.entity';
+import { UserFollowModel } from './entity/user_follow.entity';
 import { isEmpty } from '../common/util/util';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -22,6 +25,8 @@ export class AuthService {
     private readonly authRepository: Repository<UserModel>,
     @InjectRepository(UserSettingsModel)
     private readonly settingsRepository: Repository<UserSettingsModel>,
+    @InjectRepository(UserFollowModel)
+    private readonly followRepository: Repository<UserFollowModel>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -47,6 +52,8 @@ export class AuthService {
       },
       relations: {
         blog: true,
+        followers: true,
+        following: true,
       },
     });
 
@@ -218,5 +225,73 @@ export class AuthService {
     if (!user) throw new NotFoundException();
     user.status = StatusEnum.withdrawn;
     return await this.authRepository.save(user);
+  }
+
+  async followUser(followerUserId: string, targetUserId: string) {
+    if (followerUserId === targetUserId) {
+      throw new BadRequestException('자기 자신을 팔로우할 수 없습니다.');
+    }
+
+    const [follower, target] = await Promise.all([
+      this.authRepository.findOne({ where: { user_id: followerUserId } }),
+      this.authRepository.findOne({ where: { user_id: targetUserId } }),
+    ]);
+    if (!follower || !target) throw new NotFoundException();
+
+    const exists = await this.followRepository.exists({
+      where: { follower_id: follower.id, following_id: target.id },
+    });
+    if (exists) throw new ConflictException('이미 팔로우하고 있습니다.');
+
+    await this.followRepository.save(
+      this.followRepository.create({
+        follower_id: follower.id,
+        following_id: target.id,
+      }),
+    );
+    return { following: true };
+  }
+
+  async unfollowUser(followerUserId: string, targetUserId: string) {
+    const [follower, target] = await Promise.all([
+      this.authRepository.findOne({ where: { user_id: followerUserId } }),
+      this.authRepository.findOne({ where: { user_id: targetUserId } }),
+    ]);
+    if (!follower || !target) throw new NotFoundException();
+
+    const follow = await this.followRepository.findOne({
+      where: { follower_id: follower.id, following_id: target.id },
+    });
+    if (!follow) {
+      throw new NotFoundException('팔로우 관계가 존재하지 않습니다.');
+    }
+    await this.followRepository.remove(follow);
+    return { following: false };
+  }
+
+  async getFollowStatus(followerUserId: string, targetUserId: string) {
+    const [follower, target] = await Promise.all([
+      this.authRepository.findOne({ where: { user_id: followerUserId } }),
+      this.authRepository.findOne({ where: { user_id: targetUserId } }),
+    ]);
+    if (!follower || !target) return { following: false };
+
+    const following = await this.followRepository.exists({
+      where: { follower_id: follower.id, following_id: target.id },
+    });
+    return { following };
+  }
+
+  async getFollowCounts(userId: string) {
+    const user = await this.authRepository.findOne({
+      where: { user_id: userId },
+    });
+    if (!user) throw new NotFoundException();
+
+    const [followerCount, followingCount] = await Promise.all([
+      this.followRepository.count({ where: { following_id: user.id } }),
+      this.followRepository.count({ where: { follower_id: user.id } }),
+    ]);
+    return { followerCount, followingCount };
   }
 }

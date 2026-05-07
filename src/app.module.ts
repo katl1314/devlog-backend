@@ -16,6 +16,7 @@ import { TagModule } from './tag/tag.module';
 import { AppService } from './app.service';
 import { Module } from '@nestjs/common';
 import { CommonModule } from './common/common.module';
+import { UserFollowModel } from './auth/entity/user_follow.entity';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CommonModule } from './common/common.module';
         CommentModel,
         PostLikeModel,
         TagModel,
+        UserFollowModel,
       ],
       synchronize: true,
     }),
