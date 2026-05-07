@@ -8,10 +8,18 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CommonModule } from '../common/common.module';
 import { PostLikeModel } from './entity/post_like.entity';
+import { UserFollowModel } from '../auth/entity/user_follow.entity';
+import { UserModel } from '../auth/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PostModel, PostLikeModel, TagModel]),
+    TypeOrmModule.forFeature([
+      PostModel,
+      PostLikeModel,
+      TagModel,
+      UserFollowModel,
+      UserModel,
+    ]),
     AuthModule,
     TagModule,
     CommonModule,

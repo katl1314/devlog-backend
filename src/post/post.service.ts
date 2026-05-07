@@ -1,7 +1,7 @@
 import { CommonService, PaginateProps } from '../common/common.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, FindOptionsWhere, QueryRunner, Repository } from 'typeorm';
+import { Equal, FindOptionsWhere, In, QueryRunner, Repository } from 'typeorm';
 import { PostModel } from './entity/post.entity';
 import { isEmpty } from '../common/util/util';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { PostLikeModel } from './entity/post_like.entity';
 import { UserModel } from '../auth/entity/user.entity';
+import { UserFollowModel } from '../auth/entity/user_follow.entity';
 import { TagModel } from '../tag/entity/tag.entity';
 
 interface PostPaginateProps extends PaginateProps {
@@ -24,6 +25,10 @@ export class PostService {
     private readonly postRepository: Repository<PostModel>,
     @InjectRepository(PostLikeModel)
     private readonly postLikeRepository: Repository<PostLikeModel>,
+    @InjectRepository(UserFollowModel)
+    private readonly followRepository: Repository<UserFollowModel>,
+    @InjectRepository(UserModel)
+    private readonly userRepository: Repository<UserModel>,
     private readonly commonService: CommonService,
   ) {}
 
@@ -81,6 +86,39 @@ export class PostService {
       this.postRepository,
       where,
       relations,
+    );
+  }
+
+  async getFollowingFeed(dto: PaginateProps, requesterUUID: string) {
+    const follows = await this.followRepository.find({
+      where: { follower_id: requesterUUID },
+      select: ['following_id'],
+    });
+
+    if (!follows.length) {
+      return { data: [], hasNext: false, cursor: { after: null }, count: 0 };
+    }
+
+    const followingUUIDs = follows.map((f) => f.following_id);
+    const users = await this.userRepository.find({
+      where: { id: In(followingUUIDs) },
+      select: ['user_id'],
+    });
+    const slugs = users.map((u) => u.user_id);
+
+    if (!slugs.length) {
+      return { data: [], hasNext: false, cursor: { after: null }, count: 0 };
+    }
+
+    const where: FindOptionsWhere<PostModel> = {
+      user_id: In(slugs),
+      visibility: true,
+    };
+    return await this.commonService.paginate(
+      dto,
+      this.postRepository,
+      where,
+      { comments: true, likes: true },
     );
   }
 
