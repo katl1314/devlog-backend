@@ -294,4 +294,38 @@ export class AuthService {
     ]);
     return { followerCount, followingCount };
   }
+
+  async getFollowers(userId: string) {
+    const user = await this.authRepository.findOne({
+      where: { user_id: userId },
+    });
+    if (!user) throw new NotFoundException();
+
+    const rows = await this.followRepository.find({
+      where: { following_id: user.id },
+      relations: { follower: true },
+    });
+    return rows.map(({ follower }) => ({
+      user_id: follower.user_id,
+      user_name: follower.user_name,
+      avatar_url: follower.avatar_url,
+    }));
+  }
+
+  async getFollowings(userId: string) {
+    const user = await this.authRepository.findOne({
+      where: { user_id: userId },
+    });
+    if (!user) throw new NotFoundException();
+
+    const rows = await this.followRepository.find({
+      where: { follower_id: user.id },
+      relations: { following: true },
+    });
+    return rows.map(({ following }) => ({
+      user_id: following.user_id,
+      user_name: following.user_name,
+      avatar_url: following.avatar_url,
+    }));
+  }
 }

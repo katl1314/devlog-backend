@@ -298,6 +298,28 @@ export class AuthController {
   }
 
   /**
+   * 특정 유저의 팔로워 목록을 반환한다.
+   *
+   * @param userId - 조회할 user_id
+   * @returns `{ user_id, user_name, avatar_url }[]`
+   */
+  @Get('users/:userId/followers')
+  getFollowers(@Param('userId') userId: string) {
+    return this.authService.getFollowers(userId);
+  }
+
+  /**
+   * 특정 유저의 팔로잉 목록을 반환한다.
+   *
+   * @param userId - 조회할 user_id
+   * @returns `{ user_id, user_name, avatar_url }[]`
+   */
+  @Get('users/:userId/followings')
+  getFollowings(@Param('userId') userId: string) {
+    return this.authService.getFollowings(userId);
+  }
+
+  /**
    * 신규 사용자와 블로그를 동일 트랜잭션 내에서 함께 생성한다.
    *
    * @remarks
