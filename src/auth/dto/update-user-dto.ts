@@ -1,4 +1,5 @@
 import { PartialType, PickType } from '@nestjs/mapped-types';
+import { IsOptional, IsString } from 'class-validator';
 import { UserModel } from '../entity/user.entity';
 
 export class UpdateUserDto extends PartialType(
@@ -8,4 +9,8 @@ export class UpdateUserDto extends PartialType(
     'description',
     'socials',
   ] as const),
-) {}
+) {
+  @IsOptional()
+  @IsString()
+  blog_description?: string;
+}

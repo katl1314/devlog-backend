@@ -188,8 +188,13 @@ export class AuthController {
    */
   @Patch('users/:userId')
   @UseGuards(AccessTokenGuard)
-  updateUser(@Param('userId') userId: string, @Body() dto: UpdateUserDto) {
-    return this.authService.updateUser(userId, dto);
+  async updateUser(@Param('userId') userId: string, @Body() dto: UpdateUserDto) {
+    const { blog_description, ...userDto } = dto;
+    const result = await this.authService.updateUser(userId, userDto);
+    if (blog_description !== undefined) {
+      await this.blogService.updateBlogByUserId(userId, blog_description);
+    }
+    return result;
   }
 
   /**

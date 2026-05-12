@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryRunner, Repository } from 'typeorm';
 import { BlogModel } from './entity/blog.entity';
 import { isEmpty } from '../common/util/util';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class BlogService {
@@ -22,5 +22,15 @@ export class BlogService {
     const repository = this.getRepository(qr);
     const newBlog = repository.create(dto);
     return await repository.save(newBlog);
+  }
+
+  async updateBlogByUserId(userId: string, description: string) {
+    const blog = await this.blogRepository.findOne({
+      where: { user: { user_id: userId } },
+      relations: { user: true },
+    });
+    if (!blog) throw new NotFoundException();
+    blog.description = description;
+    return await this.blogRepository.save(blog);
   }
 }
