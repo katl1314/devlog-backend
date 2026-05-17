@@ -9,4 +9,5 @@ export class CreatePostDto extends PickType(PostModel, [
   'summary',
   'thumbnail',
   'visibility',
+  'series_id',
 ]) {}

@@ -16,6 +16,7 @@ import { UserModel } from '../../auth/entity/user.entity';
 import { PostLikeModel } from './post_like.entity';
 import { CommentModel } from '../../comment/entity/comment.entity';
 import { TagModel } from '../../tag/entity/tag.entity';
+import { SeriesModel } from '../../series/entity/series.entity';
 
 @Entity()
 @Unique(['user_id', 'path'])
@@ -56,7 +57,20 @@ export class PostModel {
   status: string; // enum
 
   @Column({ type: 'boolean', default: true, comment: '공개여부' })
-  visibility: boolean; // true이면 보여준다.
+  visibility: boolean;
+
+  @Column({ type: 'varchar', nullable: true, comment: '시리즈 ID' })
+  series_id: string | null;
+
+  @ManyToOne(() => SeriesModel, (series) => series.posts, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'series_id' })
+  series: SeriesModel | null;
+
+  @Column({ type: 'int', nullable: true, comment: '시리즈 내 순서' })
+  series_order: number | null;
 
   @ManyToMany(() => TagModel, (tag) => tag.posts, { onDelete: 'CASCADE' })
   @JoinTable({
