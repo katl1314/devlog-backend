@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -103,19 +104,28 @@ export class AuthController {
    */
   @Post('signIn/credentials')
   async signInWithCredentials(
-    @Body() body: { email: string; password: string },
+    @Headers('authorization') authHeader: string,
   ) {
-    const user = await this.authService.signInWithCredentials(
-      body.email,
-      body.password,
-    );
+    const base64 = this.authService.extractTokenFromHeader(authHeader, false);
+    const decoded = Buffer.from(base64, 'base64').toString('utf-8');
+    const colonIndex = decoded.indexOf(':');
+    const email = decoded.substring(0, colonIndex);
+    const password = decoded.substring(colonIndex + 1);
+    const user = await this.authService.signInWithCredentials(email, password);
     const { accessToken, refreshToken } = await this.authService.signIn({
       email: user.email,
       name: user.user_name,
       image: user.avatar_url,
       userId: user.user_id,
     });
-    return { accessToken, refreshToken, userId: user.user_id };
+    return {
+      accessToken,
+      refreshToken,
+      userId: user.user_id,
+      email: user.email,
+      user_name: user.user_name,
+      avatar_url: user.avatar_url,
+    };
   }
 
   /**
