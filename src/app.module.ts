@@ -17,6 +17,8 @@ import { AppService } from './app.service';
 import { Module } from '@nestjs/common';
 import { CommonModule } from './common/common.module';
 import { UserFollowModel } from './auth/entity/user_follow.entity';
+import { SeriesModel } from './series/entity/series.entity';
+import { SeriesModule } from './series/series.module';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { UserFollowModel } from './auth/entity/user_follow.entity';
         PostLikeModel,
         TagModel,
         UserFollowModel,
+        SeriesModel,
       ],
       synchronize: true,
     }),
@@ -48,6 +51,7 @@ import { UserFollowModel } from './auth/entity/user_follow.entity';
     PostModule,
     CommentModule,
     TagModule,
+    SeriesModule,
     CommonModule,
   ],
   controllers: [AppController],

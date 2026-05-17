@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SeriesModel } from './entity/series.entity';
+import { PostModel } from '../post/entity/post.entity';
 import { SeriesService } from './series.service';
 import { SeriesController } from './series.controller';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SeriesModel]), AuthModule],
+  imports: [TypeOrmModule.forFeature([SeriesModel, PostModel]), AuthModule],
   controllers: [SeriesController],
   providers: [SeriesService],
   exports: [SeriesService],

@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SeriesModel } from './entity/series.entity';
+import { PostModel } from '../post/entity/post.entity';
 import { CreateSeriesDto } from './dto/create-series.dto';
 import { UpdateSeriesDto } from './dto/update-series.dto';
 
@@ -14,13 +15,17 @@ export class SeriesService {
   constructor(
     @InjectRepository(SeriesModel)
     private readonly seriesRepository: Repository<SeriesModel>,
+    @InjectRepository(PostModel)
+    private readonly postRepository: Repository<PostModel>,
   ) {}
 
   async findByUserId(userId: string): Promise<SeriesModel[]> {
-    return this.seriesRepository.find({
-      where: { user_id: userId },
-      order: { created_at: 'DESC' },
-    });
+    return this.seriesRepository
+      .createQueryBuilder('series')
+      .where('series.user_id = :userId', { userId })
+      .loadRelationCountAndMap('series.post_count', 'series.posts')
+      .orderBy('series.created_at', 'DESC')
+      .getMany();
   }
 
   async findOne(id: string): Promise<SeriesModel> {
@@ -30,13 +35,13 @@ export class SeriesService {
   }
 
   async findPostsBySeries(id: string) {
-    const series = await this.seriesRepository.findOne({
-      where: { id },
-      relations: { posts: { tags: true } },
-      order: { posts: { series_order: 'ASC' } },
+    const exists = await this.seriesRepository.exists({ where: { id } });
+    if (!exists) throw new NotFoundException();
+    return this.postRepository.find({
+      where: { series_id: id },
+      relations: { user: { blog: true }, tags: true, likes: true, comments: true },
+      order: { series_order: 'ASC' },
     });
-    if (!series) throw new NotFoundException();
-    return series.posts;
   }
 
   async create(userId: string, dto: CreateSeriesDto): Promise<SeriesModel> {

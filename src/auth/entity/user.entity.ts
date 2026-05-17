@@ -13,6 +13,7 @@ import { CommentModel } from '../../comment/entity/comment.entity';
 import { BlogModel } from '../../blog/entity/blog.entity';
 import { PostModel } from '../../post/entity/post.entity';
 import { UserFollowModel } from './user_follow.entity';
+import { SeriesModel } from '../../series/entity/series.entity';
 
 export enum ProviderEnum {
   email = 'EMAIL', // 이메일
@@ -79,6 +80,9 @@ export class UserModel {
 
   @OneToMany(() => PostModel, (post) => post.user)
   posts: PostModel[];
+
+  @OneToMany(() => SeriesModel, (series) => series.user)
+  series: SeriesModel[];
 
   @OneToMany(() => PostLikeModel, (like) => like.user)
   likes: PostLikeModel[];
