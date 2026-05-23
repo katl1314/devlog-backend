@@ -117,7 +117,8 @@ export class AuthService {
       );
     }
 
-    return user;
+    const { password: _, ...safeUser } = user;
+    return safeUser as Omit<typeof user, 'password'>;
   }
 
   // 토큰 추출

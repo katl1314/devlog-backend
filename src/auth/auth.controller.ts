@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -201,7 +202,11 @@ export class AuthController {
   async updateUser(
     @Param('userId') userId: string,
     @Body() dto: UpdateUserDto,
+    @Req() req: Request & { tokenInfo: TokenPayload },
   ) {
+    if (req.tokenInfo.userId !== userId) {
+      throw new ForbiddenException('본인 프로필만 수정할 수 있습니다.');
+    }
     const { blog_description, ...userDto } = dto;
     const result = await this.authService.updateUser(userId, userDto);
     if (blog_description !== undefined) {
@@ -237,7 +242,11 @@ export class AuthController {
   updateSettings(
     @Param('userId') userId: string,
     @Body() dto: UpdateUserSettingsDto,
+    @Req() req: Request & { tokenInfo: TokenPayload },
   ) {
+    if (req.tokenInfo.userId !== userId) {
+      throw new ForbiddenException('본인 설정만 수정할 수 있습니다.');
+    }
     return this.authService.updateSettings(userId, dto);
   }
 
@@ -252,7 +261,13 @@ export class AuthController {
    */
   @Delete('users/:userId')
   @UseGuards(AccessTokenGuard)
-  withdrawUser(@Param('userId') userId: string) {
+  withdrawUser(
+    @Param('userId') userId: string,
+    @Req() req: Request & { tokenInfo: TokenPayload },
+  ) {
+    if (req.tokenInfo.userId !== userId) {
+      throw new ForbiddenException('본인 계정만 탈퇴할 수 있습니다.');
+    }
     return this.authService.withdrawUser(userId);
   }
 
