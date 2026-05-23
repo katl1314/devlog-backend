@@ -7,6 +7,7 @@ import { UserSettingsModel } from './entity/user_settings.entity';
 import { UserFollowModel } from './entity/user_follow.entity';
 import { BlogModule } from '../blog/blog.module';
 import { JwtModule } from '@nestjs/jwt';
+import { AccountCleanupCron } from './account-cleanup.cron';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
     BlogModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, AccountCleanupCron],
   exports: [AuthService],
 })
 export class AuthModule {}

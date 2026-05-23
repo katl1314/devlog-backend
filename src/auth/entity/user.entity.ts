@@ -96,6 +96,12 @@ export class UserModel {
   @OneToMany(() => UserFollowModel, (follow) => follow.following)
   followers: UserFollowModel[];
 
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deleted_at: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  token_version: number;
+
   @CreateDateColumn()
   created_at: Date;
 

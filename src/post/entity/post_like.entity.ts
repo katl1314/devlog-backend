@@ -1,5 +1,6 @@
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -29,4 +30,7 @@ export class PostLikeModel {
   @ManyToOne(() => PostModel, (post) => post.likes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post: PostModel;
+
+  @DeleteDateColumn()
+  deleted_at: Date;
 }

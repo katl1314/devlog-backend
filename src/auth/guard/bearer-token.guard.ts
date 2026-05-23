@@ -21,6 +21,7 @@ export interface TokenPayload {
   image: string;
   type: string;
   userId: string;
+  tokenVersion: number;
 }
 
 @Injectable()
@@ -48,6 +49,10 @@ abstract class BearerTokenGuard implements CanActivate {
       }
 
       const user = await this.authService.getUser(tokenInfo.userId);
+
+      if (user.token_version !== tokenInfo.tokenVersion) {
+        throw new UnauthorizedException('토큰이 만료되었습니다.');
+      }
 
       req.tokenInfo = tokenInfo;
       req.tokenType = tokenInfo.type;

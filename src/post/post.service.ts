@@ -114,12 +114,10 @@ export class PostService {
       user_id: In(slugs),
       visibility: true,
     };
-    return await this.commonService.paginate(
-      dto,
-      this.postRepository,
-      where,
-      { comments: true, likes: true },
-    );
+    return await this.commonService.paginate(dto, this.postRepository, where, {
+      comments: true,
+      likes: true,
+    });
   }
 
   private buildVisibilityWhere(userId?: string, requesterId?: string) {

@@ -5,7 +5,6 @@ import { BlogService } from '../blog/blog.service';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings-dto';
 import { ThemeEnum } from './entity/user_settings.entity';
-import { StatusEnum } from './entity/user.entity';
 import { DataSource } from 'typeorm';
 
 const mockAuthService = () => ({
@@ -43,6 +42,8 @@ describe('AuthController', () => {
     authService = module.get(AuthService);
   });
 
+  const mockReq = (userId: string) => ({ tokenInfo: { userId } }) as any;
+
   // ──────────────────────────────────────────
   // PATCH /auth/users/:userId
   // ──────────────────────────────────────────
@@ -55,7 +56,11 @@ describe('AuthController', () => {
       const expectedResult = { id: 'uuid-1', user_name: '새이름' };
       authService.updateUser.mockResolvedValue(expectedResult);
 
-      const result = await controller.updateUser('testuser', dto);
+      const result = await controller.updateUser(
+        'testuser',
+        dto,
+        mockReq('testuser'),
+      );
 
       expect(authService.updateUser).toHaveBeenCalledWith('testuser', dto);
       expect(result).toEqual(expectedResult);
@@ -75,7 +80,11 @@ describe('AuthController', () => {
       const expectedResult = { id: 'settings-uuid-1', ...dto };
       authService.updateSettings.mockResolvedValue(expectedResult);
 
-      const result = await controller.updateSettings('testuser', dto);
+      const result = await controller.updateSettings(
+        'testuser',
+        dto,
+        mockReq('testuser'),
+      );
 
       expect(authService.updateSettings).toHaveBeenCalledWith('testuser', dto);
       expect(result).toEqual(expectedResult);
@@ -87,24 +96,24 @@ describe('AuthController', () => {
       };
       authService.updateSettings.mockResolvedValue(dto);
 
-      await controller.updateSettings('testuser', dto);
+      await controller.updateSettings('testuser', dto, mockReq('testuser'));
 
       expect(authService.updateSettings).toHaveBeenCalledWith('testuser', dto);
     });
   });
 
   // ──────────────────────────────────────────
-  // DELETE /auth/users/:userId
+  // DELETE /auth/users/me
   // ──────────────────────────────────────────
-  describe('withdrawUser', () => {
-    it('authService.withdrawUser를 올바른 userId로 호출한다', async () => {
-      const expectedResult = { id: 'uuid-1', status: StatusEnum.withdrawn };
+  describe('withdrawMe', () => {
+    it('authService.withdrawUser를 토큰의 userId로 호출한다', async () => {
+      const expectedResult = { success: true };
       authService.withdrawUser.mockResolvedValue(expectedResult);
 
-      const result = await controller.withdrawUser('testuser');
+      const result = await controller.withdrawMe(mockReq('testuser'));
 
       expect(authService.withdrawUser).toHaveBeenCalledWith('testuser');
-      expect(result.status).toBe(StatusEnum.withdrawn);
+      expect(result).toEqual({ success: true });
     });
   });
 });

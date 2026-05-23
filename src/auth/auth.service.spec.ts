@@ -3,7 +3,9 @@ import { AuthService } from './auth.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserModel, StatusEnum } from './entity/user.entity';
 import { UserSettingsModel, ThemeEnum } from './entity/user_settings.entity';
+import { UserFollowModel } from './entity/user_follow.entity';
 import { JwtService } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user-dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings-dto';
@@ -43,10 +45,25 @@ const mockSettingsRepository = () => ({
   save: jest.fn(),
 });
 
+const mockFollowRepository = () => ({
+  find: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  exists: jest.fn(),
+  count: jest.fn(),
+  remove: jest.fn(),
+});
+
+const mockDataSource = () => ({
+  transaction: jest.fn(),
+});
+
 describe('AuthService', () => {
   let service: AuthService;
   let authRepo: ReturnType<typeof mockAuthRepository>;
   let settingsRepo: ReturnType<typeof mockSettingsRepository>;
+  let dataSource: ReturnType<typeof mockDataSource>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,13 +71,16 @@ describe('AuthService', () => {
         AuthService,
         { provide: getRepositoryToken(UserModel), useFactory: mockAuthRepository },
         { provide: getRepositoryToken(UserSettingsModel), useFactory: mockSettingsRepository },
+        { provide: getRepositoryToken(UserFollowModel), useFactory: mockFollowRepository },
         { provide: JwtService, useValue: { verify: jest.fn(), signAsync: jest.fn() } },
+        { provide: DataSource, useFactory: mockDataSource },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     authRepo = module.get(getRepositoryToken(UserModel));
     settingsRepo = module.get(getRepositoryToken(UserSettingsModel));
+    dataSource = module.get(DataSource);
   });
 
   // ──────────────────────────────────────────
@@ -182,21 +202,15 @@ describe('AuthService', () => {
       );
     });
 
-    it('탈퇴 처리 후 status가 WITHDRAWN으로 변경된다', async () => {
+    it('탈퇴 처리 후 { success: true }를 반환한다', async () => {
       const user = mockUser();
       authRepo.findOne.mockResolvedValue(user);
-      authRepo.save.mockResolvedValue({
-        ...user,
-        status: StatusEnum.withdrawn,
-      });
+      dataSource.transaction.mockResolvedValue(undefined);
 
       const result = await service.withdrawUser('testuser');
 
-      expect(authRepo.save).toHaveBeenCalledWith({
-        ...user,
-        status: StatusEnum.withdrawn,
-      });
-      expect(result.status).toBe(StatusEnum.withdrawn);
+      expect(dataSource.transaction).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
     });
   });
 });

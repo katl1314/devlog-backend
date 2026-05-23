@@ -19,6 +19,7 @@ import { CommonModule } from './common/common.module';
 import { UserFollowModel } from './auth/entity/user_follow.entity';
 import { SeriesModel } from './series/entity/series.entity';
 import { SeriesModule } from './series/series.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { SeriesModule } from './series/series.module';
       ],
       synchronize: true,
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     BlogModule,
     PostModule,

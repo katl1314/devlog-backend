@@ -104,9 +104,7 @@ export class AuthController {
    * @returns `accessToken`, `refreshToken`, `userId`
    */
   @Post('signIn/credentials')
-  async signInWithCredentials(
-    @Headers('authorization') authHeader: string,
-  ) {
+  async signInWithCredentials(@Headers('authorization') authHeader: string) {
     const base64 = this.authService.extractTokenFromHeader(authHeader, false);
     const decoded = Buffer.from(base64, 'base64').toString('utf-8');
     const colonIndex = decoded.indexOf(':');
@@ -152,6 +150,32 @@ export class AuthController {
   @Get('users')
   getAllUser() {
     return this.authService.getAllUser();
+  }
+
+  /**
+   * 본인 계정을 탈퇴 처리한다.
+   *
+   * @remarks
+   * deleted_at 설정, token_version 증가, 관련 데이터 soft delete를 단일 트랜잭션으로 처리한다.
+   *
+   * @param req - tokenInfo가 주입된 요청 객체
+   * @returns `{ success: true }`
+   */
+  @Delete('users/me')
+  @UseGuards(AccessTokenGuard)
+  withdrawMe(@Req() req: Request & { tokenInfo: TokenPayload }) {
+    return this.authService.withdrawUser(req.tokenInfo.userId);
+  }
+
+  /**
+   * 탈퇴 후 7일 이내 계정을 복구한다.
+   *
+   * @param body - `email`
+   * @returns `{ success: true }`
+   */
+  @Post('users/restore')
+  restoreUser(@Body() body: { token: string }) {
+    return this.authService.restoreUser(body.token);
   }
 
   /**
@@ -248,27 +272,6 @@ export class AuthController {
       throw new ForbiddenException('본인 설정만 수정할 수 있습니다.');
     }
     return this.authService.updateSettings(userId, dto);
-  }
-
-  /**
-   * 회원 탈퇴를 처리한다.
-   *
-   * @remarks
-   * 실제 행을 삭제하지 않고 `status`를 `WITHDRAWN`으로 변경하는 soft delete 방식이다.
-   *
-   * @param userId - 탈퇴할 사용자 ID
-   * @returns 탈퇴 처리 결과
-   */
-  @Delete('users/:userId')
-  @UseGuards(AccessTokenGuard)
-  withdrawUser(
-    @Param('userId') userId: string,
-    @Req() req: Request & { tokenInfo: TokenPayload },
-  ) {
-    if (req.tokenInfo.userId !== userId) {
-      throw new ForbiddenException('본인 계정만 탈퇴할 수 있습니다.');
-    }
-    return this.authService.withdrawUser(userId);
   }
 
   /**
