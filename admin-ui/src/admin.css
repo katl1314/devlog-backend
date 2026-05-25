@@ -1,0 +1,72 @@
+body { background-color: #f8f9fa; }
+
+.sidebar {
+  min-height: 100vh;
+  width: 220px;
+  background: #212529;
+  position: fixed;
+  top: 0; left: 0;
+  padding-top: 60px;
+  z-index: 100;
+}
+
+.sidebar-brand {
+  position: fixed;
+  top: 0; left: 0;
+  width: 220px;
+  height: 60px;
+  background: #1a1d20;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  text-decoration: none;
+  z-index: 101;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #adb5bd;
+  text-decoration: none;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: #343a40;
+  color: #fff;
+}
+
+.main-content {
+  margin-left: 220px;
+  padding: 1.5rem;
+}
+
+.topbar {
+  height: 60px;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 1.5rem;
+  margin-left: 220px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 99;
+}
+
+.page-wrapper {
+  padding-top: 60px;
+}
+
+.table th { font-size: 0.85rem; font-weight: 600; }
+.table td { font-size: 0.875rem; vertical-align: middle; }

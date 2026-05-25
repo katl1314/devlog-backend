@@ -20,6 +20,8 @@ import { UserFollowModel } from './auth/entity/user_follow.entity';
 import { SeriesModel } from './series/entity/series.entity';
 import { SeriesModule } from './series/series.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -48,6 +50,10 @@ import { ScheduleModule } from '@nestjs/schedule';
       synchronize: true,
     }),
     ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: process.cwd() + '/public',
+      serveRoot: '/admin-ui',
+    }),
     AuthModule,
     BlogModule,
     PostModule,
@@ -55,6 +61,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     TagModule,
     SeriesModule,
     CommonModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

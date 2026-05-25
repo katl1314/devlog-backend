@@ -27,6 +27,11 @@ export enum StatusEnum {
   withdrawn = 'WITHDRAWN', // 탈퇴
 }
 
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
 @Entity()
 export class UserModel {
   // 사용자 고유 식별자
@@ -56,6 +61,9 @@ export class UserModel {
 
   @Column({ type: 'enum', enum: StatusEnum, default: StatusEnum.active })
   status: StatusEnum;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
   @Column({ enum: ProviderEnum, type: 'enum', default: ProviderEnum.email })
   provider: ProviderEnum;
