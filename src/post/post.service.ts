@@ -56,7 +56,15 @@ export class PostService {
     return await repo.save(newPost);
   }
 
-  async delete(id: number, user_id: string, qr?: QueryRunner) {
+  async findById(id: string, user_id: string) {
+    const post = await this.postRepository.findOne({
+      where: { id: Equal(id), user_id: Equal(user_id) },
+    });
+    if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
+    return post;
+  }
+
+  async delete(id: string, user_id: string, qr?: QueryRunner) {
     const repo = this.getRepository(qr);
     const _where: FindOptionsWhere<PostModel> = {
       id,
@@ -184,7 +192,7 @@ export class PostService {
    * @Params {string | Y} userId 사용자 ID
    * @returns { isLiked: boolean }
    * */
-  async getLike(postId: number, userId: string) {
+  async getLike(postId: string, userId: string) {
     try {
       const like = await this.postLikeRepository.exists({
         where: {
@@ -207,7 +215,7 @@ export class PostService {
    * @Params {string | Y} 좋아요인지
    * @returns
    * */
-  async doLike(user: UserModel, postId: number, isLike: boolean) {
+  async doLike(user: UserModel, postId: string, isLike: boolean) {
     // 포스트를 먼저 찾아야한다.
     const post = await this.postRepository.findOne({
       where: {

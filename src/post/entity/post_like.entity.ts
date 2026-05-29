@@ -20,7 +20,7 @@ export class PostLikeModel {
   user_id: string;
 
   @Column()
-  post_id: number;
+  post_id: string;
 
   // 관계 설정
   @ManyToOne(() => UserModel, (user) => user.likes, { onDelete: 'CASCADE' })

@@ -38,7 +38,7 @@ export class CommentService {
    * @param postId 댓글을 조회할 포스트 ID
    * @returns 트리 구조의 댓글 배열
    */
-  async getComments(postId: number) {
+  async getComments(postId: string) {
     const roots = await this.commentRepository.find({
       where: { post_id: postId, parent_id: IsNull() },
       relations: { user: true },
@@ -99,7 +99,7 @@ export class CommentService {
    * @param qr     트랜잭션 QueryRunner (선택)
    */
   async createComment(
-    postId: number,
+    postId: string,
     userId: string,
     dto: CreateCommentDto,
     qr?: QueryRunner,

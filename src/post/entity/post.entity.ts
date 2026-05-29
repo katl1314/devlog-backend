@@ -22,8 +22,8 @@ import { SeriesModel } from '../../series/entity/series.entity';
 @Unique(['user_id', 'path'])
 export class PostModel {
   // 게시글 식별자
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ comment: '작성자' })
   user_id: string;

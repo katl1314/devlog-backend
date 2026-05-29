@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Body,
@@ -58,18 +57,18 @@ export class AdminController {
   }
 
   @Get('posts/:id')
-  getPostById(@Param('id', ParseIntPipe) id: number) {
+  getPostById(@Param('id') id: string) {
     return this.adminService.getPostById(id);
   }
 
   @Patch('posts/:id/visibility')
-  togglePostVisibility(@Param('id', ParseIntPipe) id: number) {
+  togglePostVisibility(@Param('id') id: string) {
     return this.adminService.togglePostVisibility(id);
   }
 
   @Delete('posts/:id')
   @HttpCode(204)
-  deletePost(@Param('id', ParseIntPipe) id: number) {
+  deletePost(@Param('id') id: string) {
     return this.adminService.deletePost(id);
   }
 

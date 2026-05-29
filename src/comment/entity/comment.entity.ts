@@ -31,7 +31,7 @@ export class CommentModel {
 
   /** 댓글이 속한 포스트 ID */
   @Column()
-  post_id: number;
+  post_id: string;
 
   /** 댓글 작성자 ID */
   @Column()

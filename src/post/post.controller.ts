@@ -6,7 +6,7 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -115,10 +115,7 @@ export class PostController {
   @Delete(':postId')
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(TransactionInterceptor)
-  async deletePost(
-    @Req() req: IRequest,
-    @Param('postId', ParseIntPipe) postId: number,
-  ) {
+  async deletePost(@Req() req: IRequest, @Param('postId') postId: string) {
     const { qr, user } = req as unknown as {
       qr: QueryRunner;
       user: { user_id: string };
@@ -139,10 +136,13 @@ export class PostController {
   @Get('following')
   @UseGuards(AccessTokenGuard)
   getFollowingFeed(
-    @Query('cursor', ParseIntPipe) cursor: number,
+    @Query('cursor') cursor: string | undefined,
     @Req() req: IRequest,
   ) {
-    return this.postService.getFollowingFeed({ cursor, take: 10 }, req.user.id);
+    return this.postService.getFollowingFeed(
+      { cursor: cursor ?? null, take: 10 },
+      req.user.id,
+    );
   }
 
   /**
@@ -160,14 +160,20 @@ export class PostController {
   @Get()
   @UseGuards(OptionalAccessTokenGuard)
   getPosts(
-    @Query('cursor', ParseIntPipe) cursor: number,
+    @Query('cursor') cursor: string | undefined,
     @Query('userId') userId: string,
     @Req() req: IRequest,
   ) {
     return this.postService.getPosts(
-      { cursor, userId, take: 10 },
+      { cursor: cursor ?? null, userId, take: 10 },
       req.user?.user_id,
     );
+  }
+
+  @Get(':id')
+  @UseGuards(AccessTokenGuard)
+  findById(@Param('id', ParseUUIDPipe) id: string, @Req() req: IRequest) {
+    return this.postService.findById(id, req.user.user_id);
   }
 
   /**
@@ -200,10 +206,7 @@ export class PostController {
    */
   @Get(':postId/like/me')
   @UseGuards(AccessTokenGuard)
-  getLikeById(
-    @Param('postId', ParseIntPipe) postId: number,
-    @Req() req: IRequest,
-  ) {
+  getLikeById(@Param('postId') postId: string, @Req() req: IRequest) {
     return this.postService.getLike(postId, req.user.id);
   }
 
@@ -216,10 +219,7 @@ export class PostController {
    */
   @Post(':postId/like')
   @UseGuards(AccessTokenGuard)
-  createLike(
-    @Req() req: IRequest,
-    @Param('postId', ParseIntPipe) postId: number,
-  ) {
+  createLike(@Req() req: IRequest, @Param('postId') postId: string) {
     return this.postService.doLike(req.user, postId, true);
   }
 
@@ -232,10 +232,7 @@ export class PostController {
    */
   @Delete(':postId/like')
   @UseGuards(AccessTokenGuard)
-  deleteLike(
-    @Req() req: IRequest,
-    @Param('postId', ParseIntPipe) postId: number,
-  ) {
+  deleteLike(@Req() req: IRequest, @Param('postId') postId: string) {
     return this.postService.doLike(req.user, postId, false);
   }
 }

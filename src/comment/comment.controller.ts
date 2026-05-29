@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Req,
@@ -45,7 +44,7 @@ export class CommentController {
    * @returns 트리 구조의 댓글 목록
    */
   @Get(':postId')
-  getComments(@Param('postId', ParseIntPipe) postId: number) {
+  getComments(@Param('postId') postId: string) {
     return this.commentService.getComments(postId);
   }
 
@@ -65,7 +64,7 @@ export class CommentController {
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(TransactionInterceptor)
   createComment(
-    @Param('postId', ParseIntPipe) postId: number,
+    @Param('postId') postId: string,
     @Body() dto: CreateCommentDto,
     @Req() req: Request & { user: UserModel; qr: QueryRunner },
   ) {

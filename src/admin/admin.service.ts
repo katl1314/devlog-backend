@@ -1,9 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserModel, StatusEnum } from '../auth/entity/user.entity';
 import { PostModel } from '../post/entity/post.entity';
 import { CommentModel } from '../comment/entity/comment.entity';
@@ -43,7 +40,10 @@ export class AdminService {
       this.userRepo.count({ where: { status: StatusEnum.blocked } }),
       this.userRepo.count({ where: { status: StatusEnum.withdrawn } }),
       this.postRepo.count({ withDeleted: false }),
-      this.postRepo.count({ where: { status: 'published' }, withDeleted: false }),
+      this.postRepo.count({
+        where: { status: 'published' },
+        withDeleted: false,
+      }),
       this.postRepo.count({ where: { status: 'draft' }, withDeleted: false }),
       this.commentRepo.count({ withDeleted: false }),
       this.likeRepo.count(),
@@ -136,15 +136,17 @@ export class AdminService {
       .skip(skip)
       .take(take);
 
-    if (search) qb.andWhere('post.title ILIKE :search', { search: `%${search}%` });
-    if (visibility !== undefined) qb.andWhere('post.visibility = :visibility', { visibility });
+    if (search)
+      qb.andWhere('post.title ILIKE :search', { search: `%${search}%` });
+    if (visibility !== undefined)
+      qb.andWhere('post.visibility = :visibility', { visibility });
     if (status) qb.andWhere('post.status = :status', { status });
 
     const [data, total] = await qb.getManyAndCount();
     return this.paginate(data, total, page, take);
   }
 
-  async getPostById(id: number) {
+  async getPostById(id: string) {
     const post = await this.postRepo.findOne({
       where: { id },
       relations: ['user'],
@@ -154,7 +156,7 @@ export class AdminService {
     return post;
   }
 
-  async togglePostVisibility(id: number) {
+  async togglePostVisibility(id: string) {
     const post = await this.postRepo.findOne({ where: { id } });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
 
@@ -163,8 +165,11 @@ export class AdminService {
     return { id, visibility };
   }
 
-  async deletePost(id: number) {
-    const post = await this.postRepo.findOne({ where: { id }, withDeleted: true });
+  async deletePost(id: string) {
+    const post = await this.postRepo.findOne({
+      where: { id },
+      withDeleted: true,
+    });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
 
     await this.postRepo.delete(id);

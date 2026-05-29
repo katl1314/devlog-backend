@@ -9,7 +9,7 @@ import {
 import { PostModel } from '../post/entity/post.entity';
 
 export interface PaginateProps {
-  cursor: number;
+  cursor: string | null;
   take: number;
 }
 
@@ -32,11 +32,14 @@ export class CommonService {
     relations: FindOptionsRelations<PostModel> = {},
   ) {
     // 1. Where 조건 동적 생성
-    if (dto.cursor && dto.cursor > 0) {
-      if (Array.isArray(where)) {
-        where = where.map((w) => ({ ...w, id: LessThan(dto.cursor) }));
-      } else {
-        where = { ...where, id: LessThan(dto.cursor) };
+    if (dto.cursor) {
+      const cursorDate = new Date(dto.cursor);
+      if (!isNaN(cursorDate.getTime())) {
+        if (Array.isArray(where)) {
+          where = where.map((w) => ({ ...w, created_at: LessThan(cursorDate) }));
+        } else {
+          where = { ...where, created_at: LessThan(cursorDate) };
+        }
       }
     }
 
@@ -50,24 +53,24 @@ export class CommonService {
       },
       take: dto.take + 1,
       order: {
-        id: 'DESC', // 최신순
+        created_at: 'DESC',
+        id: 'DESC',
       },
       where,
     };
 
     const posts = await repository.find(options);
 
-    const hasNext = posts.length > dto.take; // 다음 아이템 여부
+    const hasNext = posts.length > dto.take;
     const data = posts.slice(0, dto.take);
 
-    // 마지막 아이템의 ID를 다음 커서로 지정 (hasNext가 true일 때만)
     const lastItem = data.length > 0 ? data[data.length - 1] : null;
 
     return {
       data,
       hasNext,
       cursor: {
-        after: hasNext ? lastItem?.id : null,
+        after: hasNext ? (lastItem?.created_at?.toISOString() ?? null) : null,
       },
       count: data.length,
     };
