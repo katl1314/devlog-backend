@@ -148,6 +148,19 @@ export class CommentService {
    * @param userId    요청자 ID (본인 여부 검증용)
    * @returns 삭제된 댓글 ID
    */
+  async updateComment(commentId: string, userId: string, content: string) {
+    const comment = await this.commentRepository.findOne({
+      where: { id: Equal(commentId) },
+    });
+
+    if (!comment) throw new NotFoundException('댓글을 찾을 수 없습니다.');
+    if (comment.user_id !== userId)
+      throw new ForbiddenException('본인 댓글만 수정할 수 있습니다.');
+
+    comment.content = content;
+    return await this.commentRepository.save(comment);
+  }
+
   async deleteComment(commentId: string, userId: string) {
     const comment = await this.commentRepository.findOne({
       where: { id: Equal(commentId) },

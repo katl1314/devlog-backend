@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -15,6 +16,7 @@ import { TransactionInterceptor } from '../common/interceptor/transaction.interc
 import { AccessTokenGuard } from '../auth/guard/bearer-token.guard';
 import { QueryRunner } from 'typeorm';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UserModel } from '../auth/entity/user.entity';
 
 /**
@@ -69,6 +71,26 @@ export class CommentController {
     @Req() req: Request & { user: UserModel; qr: QueryRunner },
   ) {
     return this.commentService.createComment(postId, req.user.id, dto, req.qr);
+  }
+
+  /**
+   * 댓글 내용을 수정한다.
+   *
+   * @param commentId - 수정할 댓글 UUID
+   * @param dto       - 수정할 댓글 내용
+   * @param req       - 인증된 사용자 정보
+   * @returns 수정된 댓글
+   * @throws {NotFoundException} 댓글이 존재하지 않는 경우
+   * @throws {ForbiddenException} 본인 댓글이 아닌 경우
+   */
+  @Patch(':commentId')
+  @UseGuards(AccessTokenGuard)
+  updateComment(
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() dto: UpdateCommentDto,
+    @Req() req: Request & { user: UserModel },
+  ) {
+    return this.commentService.updateComment(commentId, req.user.id, dto.content);
   }
 
   /**
