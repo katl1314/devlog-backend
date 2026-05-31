@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC';
+
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/exception-filter/http.exception';
