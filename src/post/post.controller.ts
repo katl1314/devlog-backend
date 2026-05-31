@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -22,6 +23,7 @@ import { PostService } from './post.service';
 import { QueryFailedError, QueryRunner } from 'typeorm';
 import { TagService } from '../tag/tag.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PostModel } from './entity/post.entity';
 import { UserModel } from '../auth/entity/user.entity';
 import { DB_ERROR_CODE } from '../common/const/db-error-code.const';
@@ -170,10 +172,71 @@ export class PostController {
     );
   }
 
+  /**
+   * UUID로 포스트를 단건 조회한다.
+   *
+   * @remarks
+   * 포스트 수정 페이지 진입 시 기존 데이터를 불러오는 용도로 사용한다.
+   * 본인 포스트만 조회할 수 있으며, 다른 사용자의 포스트 ID를 전달하면 404를 반환한다.
+   *
+   * @param id  - 조회할 포스트 UUID
+   * @param req - 인증된 사용자 정보
+   * @returns 포스트 상세 정보
+   * @throws {NotFoundException} 포스트가 존재하지 않거나 본인 포스트가 아닌 경우
+   */
   @Get(':id')
   @UseGuards(AccessTokenGuard)
   findById(@Param('id', ParseUUIDPipe) id: string, @Req() req: IRequest) {
     return this.postService.findById(id, req.user.user_id);
+  }
+
+  /**
+   * 포스트를 수정한다.
+   *
+   * @remarks
+   * 본인 포스트만 수정할 수 있다.
+   * 태그는 `TagService.findOrCreateMany`로 기존 태그를 재사용하거나 신규 생성한다.
+   * 전체 로직은 `TransactionInterceptor`가 주입한 `QueryRunner` 트랜잭션 내에서 처리된다.
+   *
+   * @param req  - 인증된 사용자 정보 및 `QueryRunner`
+   * @param id   - 수정할 포스트 UUID
+   * @param post - 수정할 포스트 본문 DTO 및 태그 이름 배열
+   * @returns 수정된 포스트와 리다이렉트용 `callbackUrl`
+   * @throws {ConflictException} 동일 사용자의 동일 URL(path) 중복 시
+   * @throws {NotFoundException} 포스트가 존재하지 않거나 본인 포스트가 아닌 경우
+   */
+  @Patch(':id')
+  @UseGuards(AccessTokenGuard)
+  @UseInterceptors(TransactionInterceptor)
+  async updatePost(
+    @Req() req: IRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() post: UpdatePostDto & { tags: string[] },
+  ) {
+    const { qr, user } = req as unknown as {
+      qr: QueryRunner;
+      user: { user_id: string };
+    };
+    try {
+      const tags = await this.tagService.findOrCreateMany(post.tags ?? [], qr);
+      const updatedPost = await this.postService.update(
+        id,
+        user.user_id,
+        { ...post, tags },
+        qr,
+      );
+      const callbackUrl = `/@${user.user_id}${updatedPost.path}`;
+      return { post: updatedPost, callbackUrl };
+    } catch (e: unknown) {
+      if (
+        e instanceof QueryFailedError &&
+        (e.driverError as { code?: string }).code ===
+          DB_ERROR_CODE.UNIQUE_VIOLATION
+      ) {
+        throw new ConflictException('이미 동일한 URL의 포스트가 존재합니다.');
+      }
+      throw new BadRequestException('포스트 수정 중 오류가 발생하였습니다.');
+    }
   }
 
   /**

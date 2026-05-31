@@ -1,5 +1,6 @@
 import { CommonService, PaginateProps } from '../common/common.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, FindOptionsWhere, In, QueryRunner, Repository } from 'typeorm';
 import { PostModel } from './entity/post.entity';
@@ -58,10 +59,33 @@ export class PostService {
 
   async findById(id: string, user_id: string) {
     const post = await this.postRepository.findOne({
+      relations: {
+        tags: true,
+      },
       where: { id: Equal(id), user_id: Equal(user_id) },
     });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
     return post;
+  }
+
+  async update(
+    id: string,
+    user_id: string,
+    dto: UpdatePostDto & { tags?: TagModel[] },
+    qr?: QueryRunner,
+  ) {
+    const repo = this.getRepository(qr);
+    const post = await repo.findOne({
+      relations: { tags: true },
+      where: { id: Equal(id), user_id: Equal(user_id) },
+    });
+    if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
+
+    const { tags, ...fields } = dto;
+    Object.assign(post, fields);
+    if (tags !== undefined) post.tags = tags;
+
+    return await repo.save(post);
   }
 
   async delete(id: string, user_id: string, qr?: QueryRunner) {
