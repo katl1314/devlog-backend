@@ -1,4 +1,4 @@
-import { PartialType, PickType } from '@nestjs/mapped-types';
+import { PartialType, PickType } from '@nestjs/swagger';
 import { UserSettingsModel } from '../entity/user_settings.entity';
 
 export class UpdateUserSettingsDto extends PartialType(

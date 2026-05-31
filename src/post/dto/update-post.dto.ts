@@ -1,4 +1,4 @@
-import { PickType } from '@nestjs/mapped-types';
+import { PickType } from '@nestjs/swagger';
 import { PostModel } from '../entity/post.entity';
 
 export class UpdatePostDto extends PickType(PostModel, [

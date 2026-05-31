@@ -1,0 +1,14 @@
+{
+  "entryPointStrategy": "expand",
+  "entryPoints": ["src"],
+  "out": "./docs",
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.module.ts",
+    "**/main.ts"
+  ],
+  "tsconfig": "./tsconfig.json",
+  "name": "Dev.log Backend API",
+  "includeVersion": true,
+  "readme": "none"
+}

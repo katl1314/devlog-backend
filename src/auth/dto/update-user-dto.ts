@@ -1,4 +1,4 @@
-import { PartialType, PickType } from '@nestjs/mapped-types';
+import { PartialType, PickType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { UserModel } from '../entity/user.entity';
 
