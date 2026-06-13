@@ -82,6 +82,18 @@ export class PostService {
       where: { id: Equal(id), user_id: Equal(user_id) },
     });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
+
+    const content = await this.storageService.get(
+      STORAGE_BUCKET_POST,
+      post.content,
+    );
+
+    if (isEmpty(content)) {
+      throw new NotFoundException('포스트를 찾을 수 없습니다.');
+    }
+
+    post.content = content;
+
     return post;
   }
 
@@ -98,7 +110,16 @@ export class PostService {
     });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
 
-    const { tags, ...fields } = dto;
+    const { tags, content, ...fields } = dto;
+
+    if (content) {
+      await this.storageService.upload(
+        STORAGE_BUCKET_POST,
+        post.content,
+        content as string,
+      );
+    }
+
     Object.assign(post, fields);
     if (tags !== undefined) post.tags = tags;
 
@@ -234,7 +255,7 @@ export class PostService {
     }
 
     result.content = content;
-    console.log('> ', result);
+
     return result;
   }
 

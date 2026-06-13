@@ -3,7 +3,7 @@ import { PostModel } from '../entity/post.entity';
 
 export class UpdatePostDto extends PickType(PostModel, [
   'title',
-  'path',
+  'content',
   'summary',
   'thumbnail',
   'visibility',
