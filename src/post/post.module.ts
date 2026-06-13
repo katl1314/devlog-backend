@@ -10,6 +10,7 @@ import { CommonModule } from '../common/common.module';
 import { PostLikeModel } from './entity/post_like.entity';
 import { UserFollowModel } from '../auth/entity/user_follow.entity';
 import { UserModel } from '../auth/entity/user.entity';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UserModel } from '../auth/entity/user.entity';
     AuthModule,
     TagModule,
     CommonModule,
+    StorageModule,
   ],
   controllers: [PostController],
   providers: [PostService],

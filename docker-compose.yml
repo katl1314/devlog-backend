@@ -1,4 +1,7 @@
+name: local-dev.log
 services:
+  # 로컬 개발용 인프라 (백엔드는 npm run start:dev로 직접 실행)
+
   postgres:
     image: postgres:15
     restart: always
@@ -11,5 +14,19 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: devlog
 
+  # SeaweedFS 오브젝트 스토리지 (S3 API 포트 8333)
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    restart: always
+    command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data -ip.bind=0.0.0.0
+    volumes:
+      - seaweedfs-data:/data
+      - ../seaweedfs/s3.json:/etc/seaweedfs/s3.json
+    ports:
+      - '8333:8333'
+      - '8888:8888' # Filer UI
+      - '9333:9333' # Master UI
+
 volumes:
   postgres-data:
+  seaweedfs-data:

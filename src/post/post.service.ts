@@ -4,16 +4,22 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, FindOptionsWhere, In, QueryRunner, Repository } from 'typeorm';
 import { PostModel } from './entity/post.entity';
-import { isEmpty } from '../common/util/util';
+import { generateTimestamp, isEmpty } from '../common/util/util';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { PostLikeModel } from './entity/post_like.entity';
 import { UserModel } from '../auth/entity/user.entity';
 import { UserFollowModel } from '../auth/entity/user_follow.entity';
 import { TagModel } from '../tag/entity/tag.entity';
+import {
+  STORAGE_BUCKET_POST,
+  STORAGE_SERVICE,
+  StorageInterface,
+} from 'src/storage/storage.interface';
 
 interface PostPaginateProps extends PaginateProps {
   userId?: string;
@@ -31,6 +37,8 @@ export class PostService {
     @InjectRepository(UserModel)
     private readonly userRepository: Repository<UserModel>,
     private readonly commonService: CommonService,
+    @Inject(STORAGE_SERVICE)
+    private readonly storageService: StorageInterface,
   ) {}
 
   getRepository(qr?: QueryRunner) {
@@ -52,7 +60,16 @@ export class PostService {
     qr?: QueryRunner,
   ) {
     const repo = this.getRepository(qr);
-    post.status = 'publish'; // TODO required column 개선 필요
+    post.status = 'publish';
+    const storageKey = `${post.user_id}_${generateTimestamp()}`; // 사용자ID_
+
+    await this.storageService.upload(
+      STORAGE_BUCKET_POST,
+      storageKey,
+      post.content,
+    );
+
+    post.content = storageKey;
     const newPost = repo.create(post);
     return await repo.save(newPost);
   }
@@ -199,12 +216,25 @@ export class PostService {
       },
     });
 
-    if (!result) throw new NotFoundException('포스트를 찾을 수 없습니다.');
+    if (isEmpty(result)) {
+      throw new NotFoundException('포스트를 찾을 수 없습니다.');
+    }
 
     if (!result.visibility && result.user_id !== requesterId) {
       throw new NotFoundException('포스트를 찾을 수 없습니다.');
     }
 
+    const content = await this.storageService.get(
+      STORAGE_BUCKET_POST,
+      result.content,
+    );
+
+    if (isEmpty(content)) {
+      throw new NotFoundException('포스트를 찾을 수 없습니다.');
+    }
+
+    result.content = content;
+    console.log('> ', result);
     return result;
   }
 

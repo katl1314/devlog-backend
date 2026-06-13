@@ -10,3 +10,8 @@ export const isEmpty = (val: unknown): val is null | undefined => {
     (typeof val === 'object' && Object.keys(val).length === 0)
   );
 };
+
+export const generateTimestamp = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}${d.getMonth() + 1}${d.getDate()}${d.getHours()}${d.getMinutes()}${d.getSeconds()}${d.getMilliseconds()}`;
+};
