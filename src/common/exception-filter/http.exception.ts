@@ -7,7 +7,7 @@ import {
 import { Request, Response } from 'express';
 import { BaseExceptionFilter } from '@nestjs/core';
 
-@Catch()
+@Catch(HttpException)
 export class HttpExceptionFilter extends BaseExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
