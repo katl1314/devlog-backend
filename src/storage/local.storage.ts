@@ -75,6 +75,23 @@ export class LocalStorage implements StorageInterface, OnModuleInit {
     return res.Body?.transformToString();
   }
 
+  async getBuffer(
+    bucket: string,
+    key: string,
+  ): Promise<{ buffer: Buffer; contentType: string }> {
+    const res = await this.client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+    const byteArray = await res.Body!.transformToByteArray();
+    return {
+      buffer: Buffer.from(byteArray),
+      contentType: res.ContentType ?? 'application/octet-stream',
+    };
+  }
+
   async delete(bucket: string, key: string) {
     return await this.client.send(
       new DeleteObjectCommand({

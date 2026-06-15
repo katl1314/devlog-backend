@@ -22,6 +22,8 @@ import { SeriesModule } from './series/series.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { AdminModule } from './admin/admin.module';
+import { ImageModule } from './image/image.module';
+import { ImageModel } from './image/entity/image.entity';
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import { AdminModule } from './admin/admin.module';
         TagModel,
         UserFollowModel,
         SeriesModel,
+        ImageModel,
       ],
       synchronize: true,
     }),
@@ -62,6 +65,7 @@ import { AdminModule } from './admin/admin.module';
     SeriesModule,
     CommonModule,
     AdminModule,
+    ImageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -16,6 +16,13 @@ export class ProdStorage implements StorageInterface {
     console.info('get', bucket, key);
     throw new Error('Method not implemented.');
   }
+  getBuffer(
+    bucket: string,
+    key: string,
+  ): Promise<{ buffer: Buffer; contentType: string }> {
+    console.info('getBuffer', bucket, key);
+    throw new Error('Method not implemented.');
+  }
   delete(bucket: string, key: string): Promise<void> {
     console.info('delete', bucket, key);
     throw new Error('Method not implemented.');

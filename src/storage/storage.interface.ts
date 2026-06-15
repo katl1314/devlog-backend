@@ -8,6 +8,10 @@ export interface StorageInterface {
     contentType?: string,
   ): Promise<any>;
   get(bucket: string, key: string): Promise<string | undefined | null>;
+  getBuffer(
+    bucket: string,
+    key: string,
+  ): Promise<{ buffer: Buffer; contentType: string }>;
   delete(bucket: string, key: string): Promise<any>;
 }
 

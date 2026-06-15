@@ -116,7 +116,7 @@ export class PostService {
       await this.storageService.upload(
         STORAGE_BUCKET_POST,
         post.content,
-        content as string,
+        content,
       );
     }
 
