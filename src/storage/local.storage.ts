@@ -35,16 +35,25 @@ export class LocalStorage implements StorageInterface, OnModuleInit {
       STORAGE_BUCKET_AVATARS,
     ];
     for (const bucket of buckets) {
+      await this.initBucket(bucket);
+    }
+  }
+
+  private async initBucket(bucket: string, retries = 3, delayMs = 1000) {
+    for (let i = 0; i < retries; i++) {
       try {
         await this.client.send(new CreateBucketCommand({ Bucket: bucket }));
+        return;
       } catch (e: unknown) {
-        const storage = e as { name: string };
+        const err = e as { name: string; code?: string };
         if (
-          storage.name !== 'BucketAlreadyExists' &&
-          storage.name !== 'BucketAlreadyOwnedByYou'
+          err.name === 'BucketAlreadyExists' ||
+          err.name === 'BucketAlreadyOwnedByYou'
         ) {
-          throw e;
+          return;
         }
+        if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs));
+        else throw e;
       }
     }
   }
