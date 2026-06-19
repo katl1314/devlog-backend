@@ -45,7 +45,7 @@ export class ImageService {
 
     await this.imageRepository.update(image.id, { is_uploaded: true });
 
-    return `/image/${key}`;
+    return key;
   }
 
   async getBuffer(

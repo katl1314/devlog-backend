@@ -37,8 +37,8 @@ export class ImageController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('이미지 파일이 없습니다.');
-    const url = await this.imageService.upload(req.user.user_id, file);
-    return { url };
+    const key = await this.imageService.upload(req.user.user_id, file);
+    return { key };
   }
 
   @Get(':key')
