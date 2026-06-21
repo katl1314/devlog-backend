@@ -124,7 +124,6 @@ export class PostController {
     };
 
     const result = await this.postService.delete(postId, user.user_id, qr);
-    console.log(result);
     return { status: 'ok' };
   }
 
