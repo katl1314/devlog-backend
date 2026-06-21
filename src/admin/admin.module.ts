@@ -8,13 +8,21 @@ import { PostModel } from '../post/entity/post.entity';
 import { CommentModel } from '../comment/entity/comment.entity';
 import { PostLikeModel } from '../post/entity/post_like.entity';
 import { AuthModule } from '../auth/auth.module';
+import { SearchReindexController } from './search-reindex.controller';
+import { SearchModule } from '../search/search.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserModel, PostModel, CommentModel, PostLikeModel]),
+    TypeOrmModule.forFeature([
+      UserModel,
+      PostModel,
+      CommentModel,
+      PostLikeModel,
+    ]),
     AuthModule,
+    SearchModule,
   ],
-  controllers: [AdminController],
+  controllers: [AdminController, SearchReindexController],
   providers: [AdminService, AdminGuard],
 })
 export class AdminModule {}

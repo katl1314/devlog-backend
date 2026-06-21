@@ -20,6 +20,7 @@ import {
   STORAGE_SERVICE,
   StorageInterface,
 } from 'src/storage/storage.interface';
+import { PostSyncEvent } from '../types/express';
 
 interface PostPaginateProps extends PaginateProps {
   userId?: string;
@@ -58,10 +59,11 @@ export class PostService {
   async create(
     post: CreatePostDto & { user_id: string; tags?: TagModel[] },
     qr?: QueryRunner,
+    pendingEvents?: PostSyncEvent[],
   ) {
     const repo = this.getRepository(qr);
     post.status = 'publish';
-    const storageKey = `${post.user_id}_${generateTimestamp()}`; // 사용자ID_
+    const storageKey = `${post.user_id}_${generateTimestamp()}`;
 
     await this.storageService.upload(
       STORAGE_BUCKET_POST,
@@ -71,7 +73,28 @@ export class PostService {
 
     post.content = storageKey;
     const newPost = repo.create(post);
-    return await repo.save(newPost);
+    const saved = await repo.save(newPost);
+
+    if (pendingEvents && saved.visibility) {
+      pendingEvents.push({
+        postId: saved.id,
+        operation: 'index',
+        payload: {
+          title: saved.title,
+          summary: saved.summary,
+          tags: (saved.tags ?? []).map((t) => t.name),
+          thumbnail: saved.thumbnail,
+          visibility: saved.visibility,
+          status: saved.status,
+          userId: saved.user_id,
+          path: saved.path,
+          createdAt: saved.created_at,
+          updatedAt: saved.updated_at,
+        },
+      });
+    }
+
+    return saved;
   }
 
   async findById(id: string, user_id: string) {
@@ -102,6 +125,7 @@ export class PostService {
     user_id: string,
     dto: UpdatePostDto & { tags?: TagModel[] },
     qr?: QueryRunner,
+    pendingEvents?: PostSyncEvent[],
   ) {
     const repo = this.getRepository(qr);
     const post = await repo.findOne({
@@ -110,6 +134,7 @@ export class PostService {
     });
     if (!post) throw new NotFoundException('포스트를 찾을 수 없습니다.');
 
+    const wasVisible = post.visibility;
     const { tags, content, ...fields } = dto;
 
     if (content) {
@@ -123,20 +148,63 @@ export class PostService {
     Object.assign(post, fields);
     if (tags !== undefined) post.tags = tags;
 
-    return await repo.save(post);
+    const saved = await repo.save(post);
+
+    if (pendingEvents) {
+      const isVisible = saved.visibility;
+      if (!wasVisible && isVisible) {
+        pendingEvents.push({
+          postId: saved.id,
+          operation: 'index',
+          payload: {
+            title: saved.title,
+            summary: saved.summary,
+            tags: (saved.tags ?? []).map((t) => t.name),
+            thumbnail: saved.thumbnail,
+            visibility: saved.visibility,
+            status: saved.status,
+            userId: saved.user_id,
+            path: saved.path,
+            createdAt: saved.created_at,
+            updatedAt: saved.updated_at,
+          },
+        });
+      } else if (wasVisible && !isVisible) {
+        pendingEvents.push({ postId: saved.id, operation: 'remove' });
+      } else if (isVisible) {
+        pendingEvents.push({
+          postId: saved.id,
+          operation: 'update',
+          payload: {
+            title: saved.title,
+            summary: saved.summary,
+            tags: (saved.tags ?? []).map((t) => t.name),
+            thumbnail: saved.thumbnail,
+            visibility: saved.visibility,
+            status: saved.status,
+            updatedAt: saved.updated_at,
+          },
+        });
+      }
+    }
+
+    return saved;
   }
 
-  async delete(id: string, user_id: string, qr?: QueryRunner) {
+  async delete(id: string, user_id: string, qr?: QueryRunner, pendingEvents?: PostSyncEvent[]) {
     const repo = this.getRepository(qr);
-    const _where: FindOptionsWhere<PostModel> = {
-      id,
-      user_id,
-    };
+    const _where: FindOptionsWhere<PostModel> = { id, user_id };
     const isExist = await repo.exists({ where: _where });
 
     if (!isExist) throw new BadRequestException('post가 존재하지 않습니다.');
 
-    return await repo.delete(_where);
+    const result = await repo.delete(_where);
+
+    if (pendingEvents) {
+      pendingEvents.push({ postId: id, operation: 'remove' });
+    }
+
+    return result;
   }
 
   /*

@@ -1,0 +1,2 @@
+export const OPENSEARCH_CLIENT = 'OPENSEARCH_CLIENT';
+export const REDIS_CLIENT = 'REDIS_CLIENT';

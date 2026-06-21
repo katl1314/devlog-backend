@@ -24,6 +24,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AdminModule } from './admin/admin.module';
 import { ImageModule } from './image/image.module';
 import { ImageModel } from './image/entity/image.entity';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BullModule } from '@nestjs/bullmq';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -53,6 +56,13 @@ import { ImageModel } from './image/entity/image.entity';
       synchronize: true,
     }),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: Number(process.env.REDIS_PORT ?? 6379),
+      },
+    }),
     ServeStaticModule.forRoot({
       rootPath: process.cwd() + '/public',
       serveRoot: '/admin-ui',
@@ -66,6 +76,7 @@ import { ImageModel } from './image/entity/image.entity';
     CommonModule,
     AdminModule,
     ImageModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

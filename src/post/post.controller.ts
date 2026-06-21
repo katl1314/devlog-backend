@@ -28,9 +28,12 @@ import { PostModel } from './entity/post.entity';
 import { UserModel } from '../auth/entity/user.entity';
 import { DB_ERROR_CODE } from '../common/const/db-error-code.const';
 
+import { PostSyncEvent } from '../types/express';
+
 interface IRequest extends Request {
   qr: QueryRunner;
   user: UserModel & { user_id: string };
+  pendingSearchEvents: PostSyncEvent[];
 }
 
 /**
@@ -77,15 +80,17 @@ export class PostController {
     @Req() req: IRequest,
     @Body() post: CreatePostDto & { tags: string[] },
   ) {
-    const { qr, user } = req as unknown as {
+    const { qr, user, pendingSearchEvents } = req as unknown as {
       qr: QueryRunner;
       user: { user_id: string };
+      pendingSearchEvents: PostSyncEvent[];
     };
     try {
       const tags = await this.tagService.findOrCreateMany(post.tags ?? [], qr);
       const newPost: PostModel = await this.postService.create(
         { ...post, user_id: user.user_id, tags },
         qr,
+        pendingSearchEvents,
       );
 
       const callbackUrl = `/@${user.user_id}${newPost.path}`;
@@ -118,12 +123,18 @@ export class PostController {
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(TransactionInterceptor)
   async deletePost(@Req() req: IRequest, @Param('postId') postId: string) {
-    const { qr, user } = req as unknown as {
+    const { qr, user, pendingSearchEvents } = req as unknown as {
       qr: QueryRunner;
       user: { user_id: string };
+      pendingSearchEvents: PostSyncEvent[];
     };
 
-    const result = await this.postService.delete(postId, user.user_id, qr);
+    await this.postService.delete(
+      postId,
+      user.user_id,
+      qr,
+      pendingSearchEvents,
+    );
     return { status: 'ok' };
   }
 
@@ -212,9 +223,10 @@ export class PostController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() post: UpdatePostDto & { tags: string[] },
   ) {
-    const { qr, user } = req as unknown as {
+    const { qr, user, pendingSearchEvents } = req as unknown as {
       qr: QueryRunner;
       user: { user_id: string };
+      pendingSearchEvents: PostSyncEvent[];
     };
     try {
       const tags = await this.tagService.findOrCreateMany(post.tags ?? [], qr);
@@ -223,6 +235,7 @@ export class PostController {
         user.user_id,
         { ...post, tags },
         qr,
+        pendingSearchEvents,
       );
       const callbackUrl = `/@${user.user_id}${updatedPost.path}`;
       return { post: updatedPost, callbackUrl };
