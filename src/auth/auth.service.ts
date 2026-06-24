@@ -186,7 +186,15 @@ export class AuthService {
       where: { user_id: req.tokenInfo.userId },
     });
     if (!user) throw new NotFoundException();
-    const payload = { ...req.tokenInfo, tokenVersion: user.token_version };
+    const { id, name, email, image, userId } = req.tokenInfo;
+    const payload = {
+      id,
+      name,
+      email,
+      image,
+      userId,
+      tokenVersion: user.token_version,
+    };
     const accessToken = await this.signToken(payload, isRefreshToken);
     return { accessToken };
   }
