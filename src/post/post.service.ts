@@ -191,7 +191,12 @@ export class PostService {
     return saved;
   }
 
-  async delete(id: string, user_id: string, qr?: QueryRunner, pendingEvents?: PostSyncEvent[]) {
+  async delete(
+    id: string,
+    user_id: string,
+    qr?: QueryRunner,
+    pendingEvents?: PostSyncEvent[],
+  ) {
     const repo = this.getRepository(qr);
     const _where: FindOptionsWhere<PostModel> = { id, user_id };
     const isExist = await repo.exists({ where: _where });
